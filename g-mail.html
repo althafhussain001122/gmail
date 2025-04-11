@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gmail Clone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Compose Modal -->
+  <div id="composeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-lg font-semibold mb-4">Compose Email</h2>
+      <input type="text" placeholder="To" class="border p-2 w-full mb-2">
+      <input type="text" placeholder="Subject" class="border p-2 w-full mb-2">
+      <textarea placeholder="Message" class="border p-2 w-full h-24 mb-2"></textarea>
+      <div class="text-right">
+        <button onclick="closeCompose()" class="bg-red-500 text-white px-4 py-1 rounded mr-2">Cancel</button>
+        <button class="bg-blue-600 text-white px-4 py-1 rounded">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <header class="bg-white shadow p-4 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r2.png" class="h-6" />
+      <h1 class="text-xl font-bold">Gmail</h1>
+    </div>
+    <input type="text" placeholder="Search in emails..." class="border p-2 w-72 rounded" />
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white p-4 shadow">
+      <button onclick="openCompose()" class="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4">Compose</button>
+      <nav class="space-y-2">
+        <p class="font-semibold text-blue-600">Inbox</p>
+        <p>Starred</p>
+        <p>Sent</p>
+        <p>Drafts</p>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-4 bg-white">
+
+      <!-- Tabs -->
+      <div class="flex space-x-4 border-b pb-2 mb-4">
+        <button class="tab-btn text-blue-600 font-bold border-b-2 border-blue-600 pb-1" data-tab="Primary">Primary</button>
+        <button class="tab-btn text-gray-600" data-tab="Promotions">Promotions</button>
+        <button class="tab-btn text-gray-600" data-tab="Updates">Updates</button>
+      </div>
+
+      <!-- Email List -->
+      <div id="emailList" class="space-y-2"></div>
+
+      <!-- Email Preview -->
+      <div id="emailPreview" class="hidden mt-6 p-4 bg-gray-100 border rounded">
+        <h2 class="text-lg font-bold mb-2" id="emailSubject"></h2>
+        <p class="text-gray-600 mb-2" id="emailFrom"></p>
+        <p id="emailBody"></p>
+        <button onclick="closePreview()" class="mt-4 text-blue-600 underline">Back to Inbox</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const emails = {
+  Primary: [
+    { sender: "PW", subject: "Verification Email", body: "Click the link to verify your account.", time: "15:00" },
+    { sender: "College", subject: "Event Reminder", body: "Tomorrow’s seminar at 10 AM.", time: "14:00" },
+    { sender: "Zoom", subject: "Meeting Invite", body: "Join our webinar at 5 PM today.", time: "13:30" },
+    { sender: "Your Bank", subject: "Monthly Statement", body: "Your bank statement for March is available.", time: "12:00" },
+    { sender: "Netflix", subject: "New Show Alert", body: "Check out the latest thriller series!", time: "11:45" },
+    { sender: "HR Team", subject: "Interview Schedule", body: "Interview scheduled for Monday at 11 AM.", time: "10:30" },
+    { sender: "Dr. Raj", subject: "Appointment Reminder", body: "Your appointment is on Friday 4 PM.", time: "09:50" },
+    { sender: "ProjectX Team", subject: "Code Review Needed", body: "Please review PR #21.", time: "09:20" },
+    { sender: "Friend", subject: "Trip Photos 📸", body: "Sharing the photos from our trip!", time: "08:50" },
+    { sender: "YouTube", subject: "New Upload Alert", body: "New video from your subscribed channel.", time: "08:30" }
+  ],
+  Promotions: [
+    { sender: "Amazon", subject: "Today’s Deals", body: "Flat 50% off on electronics!", time: "10:00" },
+    { sender: "Myntra", subject: "Flat ₹500 off!", body: "Latest fashion at best prices.", time: "09:45" },
+    { sender: "Swiggy", subject: "Foodies Week", body: "20% off on your orders.", time: "09:30" },
+    { sender: "Zomato", subject: "Midnight Offers", body: "Order food after 10 PM & save big.", time: "09:15" },
+    { sender: "Udemy", subject: "₹399 Course Sale", body: "Best sellers now at ₹399.", time: "09:00" },
+    { sender: "BigBasket", subject: "Grocery Discounts", body: "Save up to 30% on your next order.", time: "08:45" },
+    { sender: "Ajio", subject: "Clearance Sale", body: "Up to 70% off – limited time only.", time: "08:30" },
+    { sender: "Flipkart", subject: "Super Coins", body: "Claim your Flipkart Super Coins now.", time: "08:15" },
+    { sender: "Snapdeal", subject: "Deal of the Day", body: "Buy 1 Get 1 Free offer!", time: "08:00" },
+    { sender: "Paytm", subject: "Cashback Alert", body: "You've got ₹50 cashback!", time: "07:45" }
+  ],
+  Updates: [
+    { sender: "GitHub", subject: "New Repo Created", body: "You created 'todo-app'.", time: "09:00" },
+    { sender: "Google", subject: "Security Alert", body: "New login detected on your device.", time: "08:45" },
+    { sender: "LinkedIn", subject: "Job Opportunity", body: "New job posted matching your profile.", time: "08:30" },
+    { sender: "Notion", subject: "Workspace Shared", body: "A new team added you to a workspace.", time: "08:15" },
+    { sender: "Stack Overflow", subject: "Your Answer Upvoted", body: "You received 5 upvotes.", time: "08:00" },
+    { sender: "Microsoft", subject: "Update Required", body: "Please update your Windows now.", time: "07:45" },
+    { sender: "Figma", subject: "Design Update", body: "Design files shared with you.", time: "07:30" },
+    { sender: "Replit", subject: "New Collaborator", body: "You’ve been added to a repl project.", time: "07:15" },
+    { sender: "Instagram", subject: "New Message", body: "You have a message request.", time: "07:00" },
+    { sender: "Discord", subject: "Server Invite", body: "You've been invited to a new server.", time: "06:45" }
+  ]
+};
+
+
+    const emailList = document.getElementById("emailList");
+    const emailPreview = document.getElementById("emailPreview");
+    const emailSubject = document.getElementById("emailSubject");
+    const emailFrom = document.getElementById("emailFrom");
+    const emailBody = document.getElementById("emailBody");
+
+    let currentTab = "Primary";
+
+    function loadEmails(tab) {
+      emailList.innerHTML = "";
+      emails[tab].forEach((mail, index) => {
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center bg-gray-50 hover:bg-gray-200 p-3 rounded cursor-pointer";
+        div.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <input type="checkbox" />
+            <strong>${mail.sender}</strong>
+            <span>${mail.subject}</span>
+          </div>
+          <span class="text-sm text-gray-500">${mail.time}</span>
+        `;
+        div.onclick = () => showEmail(mail);
+        emailList.appendChild(div);
+      });
+    }
+
+    function showEmail(mail) {
+      emailPreview.classList.remove("hidden");
+      emailList.classList.add("hidden");
+      emailSubject.innerText = mail.subject;
+      emailFrom.innerText = "From: " + mail.sender;
+      emailBody.innerText = mail.body;
+    }
+
+    function closePreview() {
+      emailPreview.classList.add("hidden");
+      emailList.classList.remove("hidden");
+    }
+
+    function openCompose() {
+      document.getElementById("composeModal").classList.remove("hidden");
+    }
+
+    function closeCompose() {
+      document.getElementById("composeModal").classList.add("hidden");
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("text-blue-600", "font-bold", "border-blue-600", "border-b-2"));
+        btn.classList.add("text-blue-600", "font-bold", "border-blue-600", "border-b-2");
+        currentTab = btn.dataset.tab;
+        loadEmails(currentTab);
+        closePreview();
+      });
+    });
+
+    // Initial Load
+    loadEmails(currentTab);
+  </script>
+
+</body>
+</html>
